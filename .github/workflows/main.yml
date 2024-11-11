@@ -1,0 +1,43 @@
+name: Build and Deploy Next.js to Vercel
+
+on:
+  push:
+    branches:
+      - main  # Deploy when code is pushed to the main branch
+  pull_request:
+    branches:
+      - main  # Deploy when pull requests are opened to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js (use your desired version)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'  # or the version you're using
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Build the Next.js application
+      - name: Build Next.js
+        run: npm run build
+
+      # Step 5: Deploy to Vercel using Vercel CLI
+      - name: Deploy to Vercel
+        run: |
+          curl -fsSL https://vercel.com/download -o vercel-cli.deb
+          sudo dpkg -i vercel-cli.deb
+          rm vercel-cli.deb
+          vercel login ${{ secrets.VERCEL_TOKEN }}
+          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}  # GitHub Secret containing your Vercel token
