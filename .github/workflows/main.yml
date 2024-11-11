@@ -1,29 +1,26 @@
-name: Build and Deploy Next.js to Vercel
+name: Build and Deploy Next.js to AWS EC2
 
 on:
   push:
     branches:
       - main  # Trigger deployment when pushing to the main branch
-  pull_request:
-    branches:
-      - main  # Trigger deployment when pull requests are opened to the main branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code from the current GitHub repository
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Node.js (use the version required by your app)
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'  # Adjust the version according to your project
+          node-version: '20'
 
-      # Step 3: Install dependencies using npm
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm install
 
@@ -31,14 +28,11 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      # Step 5: Install Vercel CLI globally using npm
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      # Step 6: Deploy to Vercel
-      - name: Deploy to Vercel
+      # Step 5: Deploy to AWS EC2 via SSH
+      - name: Deploy to AWS EC2
         run: |
-          vercel login ${{ secrets.VERCEL_TOKEN }}  # Login to Vercel using the token
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}  # Deploy to production
+          scp -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} -r ./out/ ubuntu@${{ secrets.AWS_EC2_IP }}:/path/to/your/app
+          ssh -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ubuntu@${{ secrets.AWS_EC2_IP }} "cd /path/to/your/app && npm run start"
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}  # GitHub Secret containing your Vercel token
+          AWS_SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}  # SSH private key to connect to EC2
+          AWS_EC2_IP: ${{ secrets.AWS_EC2_IP }}                    # EC2 instance public IP
